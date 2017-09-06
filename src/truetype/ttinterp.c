@@ -90,11 +90,65 @@
 #define BOUNDSL( x, n )  ( (FT_ULong)(x) >= (FT_ULong)(n) )
 
 
+  typedef int
+  (*diagnosticsFunc)( const char*        message,
+                      const char* const  opcode,
+                      int                range_base,
+                      int                is_composite,
+                      int                IP,
+                      int                callTop,
+                      int                opc,
+                      int                start );
+
+  static diagnosticsFunc  diagnostics = NULL;
+
+
 #undef  SUCCESS
 #define SUCCESS  0
 
 #undef  FAILURE
 #define FAILURE  1
+
+
+  FT_EXPORT_DEF( void )
+  TT_Diagnostics_Unset( void )
+  {
+    diagnostics = NULL;
+  }
+
+
+  FT_EXPORT_DEF( void )
+  TT_Diagnostics_Set( diagnosticsFunc  funcptr )
+  {
+    diagnostics = funcptr;
+  }
+
+
+#ifdef FT_DIAGNOSTICS
+#define DIAGNOSTICS( message, context )                                    \
+          do                                                               \
+          {                                                                \
+            if ( diagnostics )                                             \
+              (*diagnostics)( message,                                     \
+                              opcode_name[(context)->opcode] + 2,          \
+                              ( (context)->callTop                         \
+                                ? (context)->callStack->Caller_Range       \
+                                : (context)->curRange ),                   \
+                              (context)->is_composite,                     \
+                              (context)->IP,                               \
+                              (context)->callTop,                          \
+                              ( (context)->callTop                         \
+                                ? ( (context)->callStack +                 \
+                                      (context)->callTop - 1 )->Def->opc   \
+                                : 0 ),                                     \
+                              ( (context)->callTop                         \
+                                ? ( (context)->callStack +                 \
+                                      (context)->callTop - 1 )->Def->start \
+                                : 0 ) );                                   \
+          } while ( 0 )
+#else
+#define DIAGNOSTICS( message, context )  do { } while ( 0 )
+#endif
 
 
   /*************************************************************************/
@@ -910,7 +964,7 @@
   };
 
 
-#ifdef FT_DEBUG_LEVEL_TRACE
+#if defined( FT_DEBUG_LEVEL_TRACE ) || defined( FT_DIAGNOSTICS )
 
   /* the first hex digit gives the length of the opcode name; the space */
   /* after the digit is here just to increase readability of the source */
@@ -1664,17 +1718,21 @@
                FT_F26Dot6      distance )
   {
     FT_F26Dot6  v;
+    FT_Long     moved_x = 0;
+    FT_Long     moved_y = 0;
 
 
     v = exc->GS.freeVector.x;
 
     if ( v != 0 )
     {
+      moved_x = FT_MulDiv( distance, v, exc->F_dot_P );
+
 #ifdef TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY
       if ( SUBPIXEL_HINTING_INFINALITY                            &&
            ( !exc->ignore_x_mode                                ||
              ( exc->sph_tweak_flags & SPH_TWEAK_ALLOW_X_DMOVE ) ) )
-        zone->cur[point].x += FT_MulDiv( distance, v, exc->F_dot_P );
+        zone->cur[point].x += moved_x;
       else
 #endif /* TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY */
 
@@ -1683,12 +1741,12 @@
       /* diagonal moves, but only post-IUP.  DejaVu tries to adjust */
       /* diagonal stems like on `Z' and `z' post-IUP.               */
       if ( SUBPIXEL_HINTING_MINIMAL && !exc->backwards_compatibility )
-        zone->cur[point].x += FT_MulDiv( distance, v, exc->F_dot_P );
+        zone->cur[point].x += moved_x;
       else
 #endif
 
       if ( NO_SUBPIXEL_HINTING )
-        zone->cur[point].x += FT_MulDiv( distance, v, exc->F_dot_P );
+        zone->cur[point].x += moved_x;
 
       zone->tags[point] |= FT_CURVE_TAG_TOUCH_X;
     }
@@ -1697,16 +1755,33 @@
 
     if ( v != 0 )
     {
+      moved_y = FT_MulDiv( distance, v, exc->F_dot_P );
+
 #ifdef TT_SUPPORT_SUBPIXEL_HINTING_MINIMAL
       if ( !( SUBPIXEL_HINTING_MINIMAL     &&
               exc->backwards_compatibility &&
               exc->iupx_called             &&
               exc->iupy_called             ) )
 #endif
-        zone->cur[point].y += FT_MulDiv( distance, v, exc->F_dot_P );
+        zone->cur[point].y += moved_y;
 
       zone->tags[point] |= FT_CURVE_TAG_TOUCH_Y;
     }
+
+#ifdef FT_DIAGNOSTICS
+    {
+      FT_Long  F_dot_P =
+        ( (FT_Long)exc->GS.projVector.x * exc->GS.freeVector.x +
+          (FT_Long)exc->GS.projVector.y * exc->GS.freeVector.y ) >> 14;
+
+
+      if ( FT_ABS( F_dot_P ) < 0x400L )
+      {
+        if ( ( moved_x == 0 || moved_y == 0 ) && distance != 0 )
+          DIAGNOSTICS( "_rast_W_PF_VECTORS_AT_OR_NEAR_PERP", exc );
+      }
+    }
+#endif /* FT_DIAGNOSTICS */
   }
 
 
@@ -3982,6 +4057,10 @@
       }
       exc->numIDefs++;
     }
+#ifdef FT_DIAGNOSTICS
+    else
+      DIAGNOSTICS("_rast_E_INSTR_DEFD_BY_FS", exc );
+#endif
 
     /* opcode must be unsigned 8-bit integer */
     if ( 0 > args[0] || args[0] > 0x00FF )
@@ -4161,6 +4240,8 @@
     if ( BOUNDS( aIdx1, exc->zp2.n_points ) ||
          BOUNDS( aIdx2, exc->zp1.n_points ) )
     {
+      DIAGNOSTICS("_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       return FAILURE;
@@ -4315,6 +4396,16 @@
     S = (FT_Short)args[0];
     X = (FT_Long)S;
 
+#ifdef FT_DIAGNOSTICS
+    {
+      FT_Long  P_dot_P = ( X * X +  Y * Y ) >> 14;
+
+
+      if ( P_dot_P < 0x3C00 ) /* arbitrary - expect 0x4000 */
+        DIAGNOSTICS("_rast_E_VECTOR_XY_INVALID", exc );
+    }
+#endif
+
     Normalize( X, Y, &exc->GS.projVector );
 
     exc->GS.dualVector = exc->GS.projVector;
@@ -4341,6 +4432,16 @@
     Y = (FT_Long)S;
     S = (FT_Short)args[0];
     X = S;
+
+#ifdef FT_DIAGNOSTICS
+    {
+      FT_Long  F_dot_F = ( X * X +  Y * Y ) >> 14;
+
+
+      if ( F_dot_F < 0x3C00 ) /* arbitrary - expect 0x4000 */
+        DIAGNOSTICS("_rast_E_VECTOR_XY_INVALID", exc );
+    }
+#endif
 
     Normalize( X, Y, &exc->GS.freeVector );
     Compute_Funcs( exc );
@@ -4683,6 +4784,8 @@
 
     if ( BOUNDSL( L, exc->zp2.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       R = 0;
@@ -4721,6 +4824,8 @@
 
     if ( BOUNDS( L, exc->zp2.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       return;
@@ -4766,6 +4871,8 @@
     if ( BOUNDS( L, exc->zp0.n_points ) ||
          BOUNDS( K, exc->zp1.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       D = 0;
@@ -4846,6 +4953,8 @@
     if ( BOUNDS( p2, exc->zp1.n_points ) ||
          BOUNDS( p1, exc->zp2.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       return;
@@ -5074,6 +5183,12 @@
     exc->GS.instruct_control &= ~(FT_Byte)Kf;
     exc->GS.instruct_control |= (FT_Byte)L;
 
+#ifdef FT_DIAGNOSTICS
+    if ( exc->callTop                                           &&
+         ( exc->callStack->Caller_Range == tt_coderange_glyph ) )
+      DIAGNOSTICS( "_rast_E_NOT_CALLED_FROM_PREPROGRAM", exc );
+#endif
+
     if ( K == 3 )
     {
 #ifdef TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY
@@ -5199,6 +5314,8 @@
 
       if ( BOUNDS( point, exc->pts.n_points ) )
       {
+        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
         if ( exc->pedantic_hinting )
         {
           exc->error = FT_THROW( Invalid_Reference );
@@ -5245,6 +5362,8 @@
     if ( BOUNDS( K, exc->pts.n_points ) ||
          BOUNDS( L, exc->pts.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       return;
@@ -5283,6 +5402,8 @@
     if ( BOUNDS( K, exc->pts.n_points ) ||
          BOUNDS( L, exc->pts.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       return;
@@ -5318,6 +5439,8 @@
 
     if ( BOUNDS( p, zp.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       *refp = 0;
@@ -5405,6 +5528,8 @@
 
       if ( BOUNDS( point, exc->zp2.n_points ) )
       {
+        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
         if ( exc->pedantic_hinting )
         {
           exc->error = FT_THROW( Invalid_Reference );
@@ -5574,6 +5699,8 @@
 
       if ( BOUNDS( point, exc->zp2.n_points ) )
       {
+        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
         if ( exc->pedantic_hinting )
         {
           exc->error = FT_THROW( Invalid_Reference );
@@ -5721,6 +5848,8 @@
     if ( BOUNDS( point,       exc->zp1.n_points ) ||
          BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       return;
@@ -5775,6 +5904,8 @@
 
     if ( BOUNDS( point, exc->zp0.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       return;
@@ -5841,6 +5972,11 @@
     if ( BOUNDS( point,     exc->zp0.n_points ) ||
          BOUNDSL( cvtEntry, exc->cvtSize )      )
     {
+#ifdef FT_DIAGNOSTICS
+      if ( BOUNDS( point, exc->zp0.n_points ) )
+        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+#endif
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       goto Fail;
@@ -5950,6 +6086,8 @@
     if ( BOUNDS( point,       exc->zp1.n_points ) ||
          BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       goto Fail;
@@ -6105,6 +6243,12 @@
          BOUNDSL( cvtEntry,   exc->cvtSize + 1 )  ||
          BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
     {
+#ifdef FT_DIAGNOSTICS
+      if ( BOUNDS( point,       exc->zp1.n_points ) ||
+           BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
+        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+#endif
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       goto Fail;
@@ -6315,6 +6459,11 @@
     if ( exc->top < exc->GS.loop                  ||
          BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
     {
+#ifdef FT_DIAGNOSTICS
+      if ( BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
+        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+#endif
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       goto Fail;
@@ -6328,6 +6477,8 @@
 
       if ( BOUNDS( point, exc->zp1.n_points ) )
       {
+        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
         if ( exc->pedantic_hinting )
         {
           exc->error = FT_THROW( Invalid_Reference );
@@ -6389,6 +6540,8 @@
          BOUNDS( a1,    exc->zp1.n_points ) ||
          BOUNDS( point, exc->zp2.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       return;
@@ -6468,6 +6621,8 @@
     if ( BOUNDS( p1, exc->zp1.n_points ) ||
          BOUNDS( p2, exc->zp0.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       return;
@@ -6514,6 +6669,8 @@
 
     if ( BOUNDS( exc->GS.rp1, exc->zp0.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       goto Fail;
@@ -6533,6 +6690,8 @@
     if ( BOUNDS( exc->GS.rp1, exc->zp0.n_points ) ||
          BOUNDS( exc->GS.rp2, exc->zp1.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       old_range = 0;
       cur_range = 0;
     }
@@ -6567,6 +6726,8 @@
       /* check point bounds */
       if ( BOUNDS( point, exc->zp2.n_points ) )
       {
+        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
         if ( exc->pedantic_hinting )
         {
           exc->error = FT_THROW( Invalid_Reference );
@@ -6617,10 +6778,17 @@
           /*              new_dist = org_dist                .       */
 
           new_dist = org_dist;
+
+          DIAGNOSTICS( "_rast_E_RP1_RP2_SAME_POS_ON_PROJ", exc );
         }
       }
       else
         new_dist = 0;
+
+#if 0
+      if ( ( new_dist - cur_dist ) != 0 && ( new_dist - org_dist ) == 0 )
+        DIAGNOSTICS( "_rast_E_RP1_RP2_SAME_POS_ON_PROJ", exc );
+#endif
 
       exc->func_move( exc,
                       &exc->zp2,
@@ -6652,6 +6820,8 @@
 
     if ( BOUNDS( point, exc->zp0.n_points ) )
     {
+      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       return;
@@ -6878,7 +7048,11 @@
       first_point = point;
 
       if ( BOUNDS( end_point, exc->pts.n_points ) )
+      {
+        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
         end_point = exc->pts.n_points - 1;
+      }
 
       while ( point <= end_point && ( exc->pts.tags[point] & mask ) == 0 )
         point++;
@@ -7086,8 +7260,12 @@
         }
       }
       else
+      {
+        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+
         if ( exc->pedantic_hinting )
           exc->error = FT_THROW( Invalid_Reference );
+      }
     }
 
   Fail:
