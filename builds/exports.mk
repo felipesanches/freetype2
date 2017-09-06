@@ -64,6 +64,8 @@ ifneq ($(EXPORTS_LIST),)
 	  $(subst /,$(SEP),$(APINAMES_EXE)) -o$@ $(APINAMES_OPTIONS) $(PUBLIC_HEADERS)
 	  @echo TT_New_Context >> $(EXPORTS_LIST)
 	  @echo TT_RunIns >> $(EXPORTS_LIST)
+	  @echo TT_Diagnostics_Unset >> $(EXPORTS_LIST)
+	  @echo TT_Diagnostics_Set >> $(EXPORTS_LIST)
 
   $(PROJECT_LIBRARY): $(EXPORTS_LIST)
 
