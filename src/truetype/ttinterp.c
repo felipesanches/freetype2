@@ -3640,6 +3640,9 @@
       /* check that there is enough room for new functions */
       if ( exc->numFDefs >= exc->maxFDefs )
       {
+#ifdef FT_DIAGNOSTICS
+        DIAGNOSTICS("_rast_E_FDEF_OUT_OF_RANGE", exc );
+#endif
         exc->error = FT_THROW( Too_Many_Function_Defs );
         return;
       }
@@ -3650,6 +3653,9 @@
     /* func # must be within unsigned 16-bit integer */
     if ( n > 0xFFFFU )
     {
+#ifdef FT_DIAGNOSTICS
+      DIAGNOSTICS("_rast_E_FDEF_OUT_OF_RANGE", exc );
+#endif
       exc->error = FT_THROW( Too_Many_Function_Defs );
       return;
     }
