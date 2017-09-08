@@ -3078,6 +3078,7 @@
 
     if ( BOUNDSL( I, exc->cvtSize ) )
     {
+      DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
       if ( exc->pedantic_hinting )
         ARRAY_BOUND_ERROR;
     }
@@ -3101,6 +3102,7 @@
 
     if ( BOUNDSL( I, exc->cvtSize ) )
     {
+      DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
       if ( exc->pedantic_hinting )
         ARRAY_BOUND_ERROR;
     }
@@ -3124,6 +3126,7 @@
 
     if ( BOUNDSL( I, exc->cvtSize ) )
     {
+      DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
       if ( exc->pedantic_hinting )
         ARRAY_BOUND_ERROR;
       else
@@ -5993,8 +5996,10 @@
 #ifdef FT_DIAGNOSTICS
       if ( BOUNDS( point, exc->zp0.n_points ) )
         DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
-#endif
 
+      if ( BOUNDSL( cvtEntry, exc->cvtSize ) )
+        DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
+#endif
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       goto Fail;
@@ -6258,15 +6263,17 @@
     /* XXX: UNDOCUMENTED! cvt[-1] = 0 always */
 
     if ( BOUNDS( point,       exc->zp1.n_points ) ||
-         BOUNDSL( cvtEntry,   exc->cvtSize + 1 )  ||
+         BOUNDSL( cvtEntry - 1,   exc->cvtSize )  ||
          BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
     {
 #ifdef FT_DIAGNOSTICS
       if ( BOUNDS( point,       exc->zp1.n_points ) ||
            BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
         DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
-#endif
 
+      if ( BOUNDSL( cvtEntry - 1, exc->cvtSize ) )
+        DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
+#endif
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
       goto Fail;
@@ -7326,6 +7333,7 @@
 
       if ( BOUNDSL( A, exc->cvtSize ) )
       {
+        DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
         if ( exc->pedantic_hinting )
         {
           exc->error = FT_THROW( Invalid_Reference );
