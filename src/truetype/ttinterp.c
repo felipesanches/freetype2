@@ -3158,6 +3158,9 @@
   static void
   Ins_DEBUG( TT_ExecContext  exc )
   {
+#ifdef FT_DIAGNOSTICS
+    DIAGNOSTICS("_rast_W_DEBUG_FOUND", exc );
+#endif
     exc->error = FT_THROW( Debug_OpCode );
   }
 
