@@ -4080,6 +4080,9 @@
     /* opcode must be unsigned 8-bit integer */
     if ( 0 > args[0] || args[0] > 0x00FF )
     {
+#ifdef FT_DIAGNOSTICS
+      DIAGNOSTICS("_rast_E_INST_OPCODE_TO_LARGE", exc );
+#endif
       exc->error = FT_THROW( Too_Many_Instruction_Defs );
       return;
     }
