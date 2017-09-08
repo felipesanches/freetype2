@@ -2361,6 +2361,9 @@
 
       /* This opcode is reserved, but... */
       case 0xC0:
+#ifdef FT_DIAGNOSTICS
+        DIAGNOSTICS("_rast_E_3_USED_FOR_PERIOD", exc );
+#endif
         exc->period = GridPeriod;
         break;
     }
