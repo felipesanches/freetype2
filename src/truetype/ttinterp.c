@@ -4064,6 +4064,9 @@
       /* check that there is enough room for a new instruction */
       if ( exc->numIDefs >= exc->maxIDefs )
       {
+#ifdef FT_DIAGNOSTICS
+        DIAGNOSTICS("_rast_E_EXCEEDS_INSTR_DEFS_IN_MAXP", exc );
+#endif
         exc->error = FT_THROW( Too_Many_Instruction_Defs );
         return;
       }
