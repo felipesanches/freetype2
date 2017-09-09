@@ -359,6 +359,10 @@ FT_BEGIN_HEADER
     FT_Incremental_InterfaceRec*  incremental_interface;
 #endif
 
+#ifdef FT_DIAGNOSTICS
+    FT_DiagnosticsFunc  diagnostics;
+#endif
+
     FT_Int              refcount;
 
   } FT_Face_InternalRec;

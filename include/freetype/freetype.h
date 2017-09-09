@@ -837,7 +837,6 @@ FT_BEGIN_HEADER
   } FT_CharMapRec;
 
 
-#ifdef FT_DIAGNOSTICS
   /*************************************************************************/
   /*                                                                       */
   /* <Struct>                                                              */
@@ -855,7 +854,7 @@ FT_BEGIN_HEADER
                                        int                callTop,
                                        int                opc,
                                        int                start );
-#endif
+
 
   /*************************************************************************/
   /*************************************************************************/
@@ -1046,6 +1045,10 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /*    charmap             :: The current active charmap for this face.   */
   /*                                                                       */
+  /*    diagnostics         :: A callback that provides details about      */
+  /*                           problems detected while interpreting        */
+  /*                           hinting instructions.                       */
+  /*                                                                       */
   /* <Note>                                                                */
   /*    Fields may be changed after a call to @FT_Attach_File or           */
   /*    @FT_Attach_Stream.                                                 */
@@ -1103,10 +1106,6 @@ FT_BEGIN_HEADER
     void*             extensions; /* unused                         */
 
     FT_Face_Internal  internal;
-
-#ifdef FT_DIAGNOSTICS
-    FT_DiagnosticsFunc  diagnostics;
-#endif
 
     /*@private end */
 
@@ -4290,7 +4289,6 @@ FT_BEGIN_HEADER
                                 FT_Bool  value );
 
 
-#ifdef FT_DIAGNOSTICS
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
@@ -4326,8 +4324,6 @@ FT_BEGIN_HEADER
   /*                                                                       */
   FT_EXPORT( void )
   FT_Diagnostics_Unset( FT_Face face );
-
-#endif /* FT_DIAGNOSTICS */
 
   /* */
 

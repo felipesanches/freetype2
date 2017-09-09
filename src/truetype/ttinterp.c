@@ -100,7 +100,7 @@
   FT_EXPORT_DEF( void )
   FT_Diagnostics_Unset( FT_Face  face )
   {
-    face->diagnostics = NULL;
+    face->internal->diagnostics = NULL;
   }
 
   /* documentation is in freetype.h */
@@ -108,7 +108,7 @@
   FT_Diagnostics_Set( FT_Face  face,
                       FT_DiagnosticsFunc  funcptr )
   {
-    face->diagnostics = funcptr;
+    face->internal->diagnostics = funcptr;
   }
 #endif
 
@@ -116,8 +116,8 @@
 #define DIAGNOSTICS( message, context )                                    \
           do                                                               \
           {                                                                \
-            if ( exc->face->root.diagnostics )                            \
-              (*exc->face->root.diagnostics)( message,                    \
+            if ( exc->face->root.internal->diagnostics )                    \
+              (*exc->face->root.internal->diagnostics)( message,            \
                               opcode_name[(context)->opcode] + 2,          \
                               ( (context)->callTop                         \
                                 ? (context)->callStack->Caller_Range       \
