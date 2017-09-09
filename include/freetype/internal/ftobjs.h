@@ -772,7 +772,6 @@ FT_BEGIN_HEADER
                                             FT_Render_Mode  render_mode,
                                             FT_Library      library );
 
-
   /*************************************************************************/
   /*                                                                       */
   /* <Struct>                                                              */

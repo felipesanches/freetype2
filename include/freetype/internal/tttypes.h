@@ -1157,6 +1157,10 @@ FT_BEGIN_HEADER
   /*                            It must be called after the header was     */
   /*                            read, and before the `forget'.             */
   /*                                                                       */
+  /*    diagnostics          :: A callback that provides details about     */
+  /*                            problems detected while interpreting       */
+  /*                            hinting instructions.                      */
+  /*                                                                       */
   /*    sfnt                 :: A pointer to the SFNT service.             */
   /*                                                                       */
   /*    psnames              :: A pointer to the PostScript names service. */

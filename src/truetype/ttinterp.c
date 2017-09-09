@@ -89,47 +89,35 @@
 #define BOUNDS( x, n )   ( (FT_UInt)(x)  >= (FT_UInt)(n)  )
 #define BOUNDSL( x, n )  ( (FT_ULong)(x) >= (FT_ULong)(n) )
 
-
-  typedef int
-  (*diagnosticsFunc)( const char*        message,
-                      const char* const  opcode,
-                      int                range_base,
-                      int                is_composite,
-                      int                IP,
-                      int                callTop,
-                      int                opc,
-                      int                start );
-
-  static diagnosticsFunc  diagnostics = NULL;
-
-
 #undef  SUCCESS
 #define SUCCESS  0
 
 #undef  FAILURE
 #define FAILURE  1
 
-
+#ifdef FT_DIAGNOSTICS
+  /* documentation is in freetype.h */
   FT_EXPORT_DEF( void )
-  TT_Diagnostics_Unset( void )
+  FT_Diagnostics_Unset( FT_Face  face )
   {
-    diagnostics = NULL;
+    face->diagnostics = NULL;
   }
 
-
+  /* documentation is in freetype.h */
   FT_EXPORT_DEF( void )
-  TT_Diagnostics_Set( diagnosticsFunc  funcptr )
+  FT_Diagnostics_Set( FT_Face  face,
+                      FT_DiagnosticsFunc  funcptr )
   {
-    diagnostics = funcptr;
+    face->diagnostics = funcptr;
   }
-
+#endif
 
 #ifdef FT_DIAGNOSTICS
 #define DIAGNOSTICS( message, context )                                    \
           do                                                               \
           {                                                                \
-            if ( diagnostics )                                             \
-              (*diagnostics)( message,                                     \
+            if ( exc->face->root.diagnostics )                            \
+              (*exc->face->root.diagnostics)( message,                    \
                               opcode_name[(context)->opcode] + 2,          \
                               ( (context)->callTop                         \
                                 ? (context)->callStack->Caller_Range       \

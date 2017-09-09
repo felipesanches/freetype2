@@ -837,6 +837,26 @@ FT_BEGIN_HEADER
   } FT_CharMapRec;
 
 
+#ifdef FT_DIAGNOSTICS
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Struct>                                                              */
+  /*    FT_DiagnosticsFunc                                                 */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    A callback that provides details about problems detected           */
+  /*    while interpreting hinting instructions.                           */
+  /*                                                                       */
+  typedef int   (*FT_DiagnosticsFunc)( const char*        message,
+                                       const char* const  opcode,
+                                       int                range_base,
+                                       int                is_composite,
+                                       int                IP,
+                                       int                callTop,
+                                       int                opc,
+                                       int                start );
+#endif
+
   /*************************************************************************/
   /*************************************************************************/
   /*                                                                       */
@@ -1083,6 +1103,10 @@ FT_BEGIN_HEADER
     void*             extensions; /* unused                         */
 
     FT_Face_Internal  internal;
+
+#ifdef FT_DIAGNOSTICS
+    FT_DiagnosticsFunc  diagnostics;
+#endif
 
     /*@private end */
 
@@ -4265,8 +4289,47 @@ FT_BEGIN_HEADER
   FT_Face_SetUnpatentedHinting( FT_Face  face,
                                 FT_Bool  value );
 
-  /* */
 
+#ifdef FT_DIAGNOSTICS
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Function>                                                            */
+  /*    FT_Diagnostics_Set                                                 */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    Registers a callback that is called whenever a problem is          */
+  /*    detected during execution of truetype hinting instructions.        */
+  /*    The callback provides userspace applications context on what kind  */
+  /*    of problem was detected and the state of the truetype interpreter. */
+  /*                                                                       */
+  /* <Input>                                                               */
+  /*    face :: A handle to the taget face object.                         */
+  /*    funcptr :: A function callback to a truetype hinting               */
+  /*               diagnostics routine.                                    */
+  /*                                                                       */
+  FT_EXPORT( void )
+  FT_Diagnostics_Set( FT_Face face,
+                      FT_DiagnosticsFunc  funcptr );
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Function>                                                            */
+  /*    FT_Diagnostics_Unset                                               */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    Disables the truetype hinting diagnostics callback by              */
+  /*    setting it to a NULL pointer.                                      */
+  /*                                                                       */
+  /* <Input>                                                               */
+  /*    face :: A handle to the taget face object.                         */
+  /*                                                                       */
+  FT_EXPORT( void )
+  FT_Diagnostics_Unset( FT_Face face );
+
+#endif /* FT_DIAGNOSTICS */
+
+  /* */
 
 FT_END_HEADER
 
