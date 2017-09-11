@@ -3906,6 +3906,7 @@
     /* check the call stack */
     if ( exc->callTop >= exc->callSize )
     {
+      DIAGNOSTICS( FT_RASTER_ERROR_STACK_OVERFLOW );
       exc->error = FT_THROW( Stack_Overflow );
       return;
     }
@@ -3992,6 +3993,7 @@
     /* check stack */
     if ( exc->callTop >= exc->callSize )
     {
+      DIAGNOSTICS( FT_RASTER_ERROR_STACK_OVERFLOW );
       exc->error = FT_THROW( Stack_Overflow );
       return;
     }
@@ -4116,6 +4118,7 @@
 
     if ( BOUNDS( L, exc->stackSize + 1 - exc->top ) )
     {
+      DIAGNOSTICS( FT_RASTER_ERROR_STACK_OVERFLOW );
       exc->error = FT_THROW( Stack_Overflow );
       return;
     }
@@ -4144,6 +4147,7 @@
 
     if ( BOUNDS( L, exc->stackSize + 1 - exc->top ) )
     {
+      DIAGNOSTICS( FT_RASTER_ERROR_STACK_OVERFLOW );
       exc->error = FT_THROW( Stack_Overflow );
       return;
     }
@@ -4175,6 +4179,7 @@
 
     if ( BOUNDS( L, exc->stackSize + 1 - exc->top ) )
     {
+      DIAGNOSTICS( FT_RASTER_ERROR_STACK_OVERFLOW );
       exc->error = FT_THROW( Stack_Overflow );
       return;
     }
@@ -4201,6 +4206,7 @@
 
     if ( BOUNDS( L, exc->stackSize + 1 - exc->top ) )
     {
+      DIAGNOSTICS( FT_RASTER_ERROR_STACK_OVERFLOW );
       exc->error = FT_THROW( Stack_Overflow );
       return;
     }
@@ -7584,6 +7590,7 @@
 
         if ( exc->callTop >= exc->callSize )
         {
+          DIAGNOSTICS( FT_RASTER_ERROR_STACK_OVERFLOW );
           exc->error = FT_THROW( Stack_Overflow );
           return;
         }
@@ -7761,6 +7768,7 @@
       /* statement.                                                     */
       if ( exc->new_top > exc->stackSize )
       {
+        DIAGNOSTICS( FT_RASTER_ERROR_STACK_OVERFLOW );
         exc->error = FT_THROW( Stack_Overflow );
         goto LErrorLabel_;
       }
