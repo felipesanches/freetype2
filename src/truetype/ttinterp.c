@@ -113,29 +113,29 @@
 #endif
 
 #ifdef FT_DIAGNOSTICS
-#define DIAGNOSTICS( message, context )                                    \
-          do                                                               \
-          {                                                                \
-            if ( exc->face->root.internal->diagnostics )                    \
-              (*exc->face->root.internal->diagnostics)( message,            \
-                              opcode_name[(context)->opcode] + 2,          \
-                              ( (context)->callTop                         \
-                                ? (context)->callStack->Caller_Range       \
-                                : (context)->curRange ),                   \
-                              (context)->is_composite,                     \
-                              (context)->IP,                               \
-                              (context)->callTop,                          \
-                              ( (context)->callTop                         \
-                                ? ( (context)->callStack +                 \
-                                      (context)->callTop - 1 )->Def->opc   \
-                                : 0 ),                                     \
-                              ( (context)->callTop                         \
-                                ? ( (context)->callStack +                 \
-                                      (context)->callTop - 1 )->Def->start \
-                                : 0 ) );                                   \
+#define DIAGNOSTICS( msgid )                                           \
+          do                                                           \
+          {                                                            \
+            if ( exc->face->root.internal->diagnostics )               \
+              (*exc->face->root.internal->diagnostics)( msgid,         \
+                              opcode_name[(exc)->opcode] + 2,          \
+                              ( (exc)->callTop                         \
+                                ? (exc)->callStack->Caller_Range       \
+                                : (exc)->curRange ),                   \
+                              (exc)->is_composite,                     \
+                              (exc)->IP,                               \
+                              (exc)->callTop,                          \
+                              ( (exc)->callTop                         \
+                                ? ( (exc)->callStack +                 \
+                                      (exc)->callTop - 1 )->Def->opc   \
+                                : 0 ),                                 \
+                              ( (exc)->callTop                         \
+                                ? ( (exc)->callStack +                 \
+                                      (exc)->callTop - 1 )->Def->start \
+                                : 0 ) );                               \
           } while ( 0 )
 #else
-#define DIAGNOSTICS( message, context )  do { } while ( 0 )
+#define DIAGNOSTICS( msgid )  do { } while ( 0 )
 #endif
 
 
@@ -1766,7 +1766,7 @@
       if ( FT_ABS( F_dot_P ) < 0x400L )
       {
         if ( ( moved_x == 0 || moved_y == 0 ) && distance != 0 )
-          DIAGNOSTICS( "_rast_W_PF_VECTORS_AT_OR_NEAR_PERP", exc );
+          DIAGNOSTICS( FT_RASTER_WARNING_PF_VECTORS_AT_OR_NEAR_PERP );
       }
     }
 #endif /* FT_DIAGNOSTICS */
@@ -2349,9 +2349,7 @@
 
       /* This opcode is reserved, but... */
       case 0xC0:
-#ifdef FT_DIAGNOSTICS
-        DIAGNOSTICS("_rast_E_3_USED_FOR_PERIOD", exc );
-#endif
+        DIAGNOSTICS( FT_RASTER_ERROR_3_USED_FOR_PERIOD );
         exc->period = GridPeriod;
         break;
     }
@@ -3066,7 +3064,7 @@
 
     if ( BOUNDSL( I, exc->cvtSize ) )
     {
-      DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_CVT_OUT_OF_RANGE );
       if ( exc->pedantic_hinting )
         ARRAY_BOUND_ERROR;
     }
@@ -3090,7 +3088,7 @@
 
     if ( BOUNDSL( I, exc->cvtSize ) )
     {
-      DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_CVT_OUT_OF_RANGE );
       if ( exc->pedantic_hinting )
         ARRAY_BOUND_ERROR;
     }
@@ -3114,7 +3112,7 @@
 
     if ( BOUNDSL( I, exc->cvtSize ) )
     {
-      DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_CVT_OUT_OF_RANGE );
       if ( exc->pedantic_hinting )
         ARRAY_BOUND_ERROR;
       else
@@ -3149,9 +3147,7 @@
   static void
   Ins_DEBUG( TT_ExecContext  exc )
   {
-#ifdef FT_DIAGNOSTICS
-    DIAGNOSTICS("_rast_W_DEBUG_FOUND", exc );
-#endif
+    DIAGNOSTICS( FT_RASTER_WARNING_DEBUG_FOUND );
     exc->error = FT_THROW( Debug_OpCode );
   }
 
@@ -3631,9 +3627,7 @@
       /* check that there is enough room for new functions */
       if ( exc->numFDefs >= exc->maxFDefs )
       {
-#ifdef FT_DIAGNOSTICS
-        DIAGNOSTICS("_rast_E_FDEF_OUT_OF_RANGE", exc );
-#endif
+        DIAGNOSTICS( FT_RASTER_ERROR_FDEF_OUT_OF_RANGE );
         exc->error = FT_THROW( Too_Many_Function_Defs );
         return;
       }
@@ -3644,9 +3638,7 @@
     /* func # must be within unsigned 16-bit integer */
     if ( n > 0xFFFFU )
     {
-#ifdef FT_DIAGNOSTICS
-      DIAGNOSTICS("_rast_E_FDEF_OUT_OF_RANGE", exc );
-#endif
+      DIAGNOSTICS( FT_RASTER_ERROR_FDEF_OUT_OF_RANGE );
       exc->error = FT_THROW( Too_Many_Function_Defs );
       return;
     }
@@ -4055,9 +4047,7 @@
       /* check that there is enough room for a new instruction */
       if ( exc->numIDefs >= exc->maxIDefs )
       {
-#ifdef FT_DIAGNOSTICS
-        DIAGNOSTICS("_rast_E_EXCEEDS_INSTR_DEFS_IN_MAXP", exc );
-#endif
+        DIAGNOSTICS( FT_RASTER_ERROR_EXCEEDS_INSTR_DEFS_IN_MAXP );
         exc->error = FT_THROW( Too_Many_Instruction_Defs );
         return;
       }
@@ -4065,15 +4055,13 @@
     }
 #ifdef FT_DIAGNOSTICS
     else
-      DIAGNOSTICS("_rast_E_INSTR_DEFD_BY_FS", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_INSTR_DEFD_BY_FS );
 #endif
 
     /* opcode must be unsigned 8-bit integer */
     if ( 0 > args[0] || args[0] > 0x00FF )
     {
-#ifdef FT_DIAGNOSTICS
-      DIAGNOSTICS("_rast_E_INST_OPCODE_TO_LARGE", exc );
-#endif
+      DIAGNOSTICS( FT_RASTER_ERROR_INST_OPCODE_TO_LARGE );
       exc->error = FT_THROW( Too_Many_Instruction_Defs );
       return;
     }
@@ -4249,7 +4237,7 @@
     if ( BOUNDS( aIdx1, exc->zp2.n_points ) ||
          BOUNDS( aIdx2, exc->zp1.n_points ) )
     {
-      DIAGNOSTICS("_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -4411,7 +4399,7 @@
 
 
       if ( P_dot_P < 0x3C00 ) /* arbitrary - expect 0x4000 */
-        DIAGNOSTICS("_rast_E_VECTOR_XY_INVALID", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_VECTOR_XY_INVALID );
     }
 #endif
 
@@ -4448,7 +4436,7 @@
 
 
       if ( F_dot_F < 0x3C00 ) /* arbitrary - expect 0x4000 */
-        DIAGNOSTICS("_rast_E_VECTOR_XY_INVALID", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_VECTOR_XY_INVALID );
     }
 #endif
 
@@ -4793,7 +4781,7 @@
 
     if ( BOUNDSL( L, exc->zp2.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -4833,7 +4821,7 @@
 
     if ( BOUNDS( L, exc->zp2.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -4880,7 +4868,7 @@
     if ( BOUNDS( L, exc->zp0.n_points ) ||
          BOUNDS( K, exc->zp1.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -4962,7 +4950,7 @@
     if ( BOUNDS( p2, exc->zp1.n_points ) ||
          BOUNDS( p1, exc->zp2.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -5195,7 +5183,7 @@
 #ifdef FT_DIAGNOSTICS
     if ( exc->callTop                                           &&
          ( exc->callStack->Caller_Range == tt_coderange_glyph ) )
-      DIAGNOSTICS( "_rast_E_NOT_CALLED_FROM_PREPROGRAM", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_NOT_CALLED_FROM_PREPROGRAM );
 #endif
 
     if ( K == 3 )
@@ -5323,7 +5311,7 @@
 
       if ( BOUNDS( point, exc->pts.n_points ) )
       {
-        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
         if ( exc->pedantic_hinting )
         {
@@ -5371,7 +5359,7 @@
     if ( BOUNDS( K, exc->pts.n_points ) ||
          BOUNDS( L, exc->pts.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -5411,7 +5399,7 @@
     if ( BOUNDS( K, exc->pts.n_points ) ||
          BOUNDS( L, exc->pts.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -5448,7 +5436,7 @@
 
     if ( BOUNDS( p, zp.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -5537,7 +5525,7 @@
 
       if ( BOUNDS( point, exc->zp2.n_points ) )
       {
-        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
         if ( exc->pedantic_hinting )
         {
@@ -5708,7 +5696,7 @@
 
       if ( BOUNDS( point, exc->zp2.n_points ) )
       {
-        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
         if ( exc->pedantic_hinting )
         {
@@ -5857,7 +5845,7 @@
     if ( BOUNDS( point,       exc->zp1.n_points ) ||
          BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -5913,7 +5901,7 @@
 
     if ( BOUNDS( point, exc->zp0.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -5983,10 +5971,10 @@
     {
 #ifdef FT_DIAGNOSTICS
       if ( BOUNDS( point, exc->zp0.n_points ) )
-        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( BOUNDSL( cvtEntry, exc->cvtSize ) )
-        DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_CVT_OUT_OF_RANGE );
 #endif
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -6097,7 +6085,7 @@
     if ( BOUNDS( point,       exc->zp1.n_points ) ||
          BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -6257,10 +6245,10 @@
 #ifdef FT_DIAGNOSTICS
       if ( BOUNDS( point,       exc->zp1.n_points ) ||
            BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
-        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( BOUNDSL( cvtEntry - 1, exc->cvtSize ) )
-        DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_CVT_OUT_OF_RANGE );
 #endif
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -6474,7 +6462,7 @@
     {
 #ifdef FT_DIAGNOSTICS
       if ( BOUNDS( exc->GS.rp0, exc->zp0.n_points ) )
-        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 #endif
 
       if ( exc->pedantic_hinting )
@@ -6490,7 +6478,7 @@
 
       if ( BOUNDS( point, exc->zp1.n_points ) )
       {
-        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
         if ( exc->pedantic_hinting )
         {
@@ -6553,7 +6541,7 @@
          BOUNDS( a1,    exc->zp1.n_points ) ||
          BOUNDS( point, exc->zp2.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -6634,7 +6622,7 @@
     if ( BOUNDS( p1, exc->zp1.n_points ) ||
          BOUNDS( p2, exc->zp0.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -6682,7 +6670,7 @@
 
     if ( BOUNDS( exc->GS.rp1, exc->zp0.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -6703,7 +6691,7 @@
     if ( BOUNDS( exc->GS.rp1, exc->zp0.n_points ) ||
          BOUNDS( exc->GS.rp2, exc->zp1.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       old_range = 0;
       cur_range = 0;
@@ -6739,7 +6727,7 @@
       /* check point bounds */
       if ( BOUNDS( point, exc->zp2.n_points ) )
       {
-        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
         if ( exc->pedantic_hinting )
         {
@@ -6792,7 +6780,7 @@
 
           new_dist = org_dist;
 
-          DIAGNOSTICS( "_rast_E_RP1_RP2_SAME_POS_ON_PROJ", exc );
+          DIAGNOSTICS( FT_RASTER_ERROR_RP1_RP2_SAME_POS_ON_PROJ );
         }
       }
       else
@@ -6800,7 +6788,7 @@
 
 #if 0
       if ( ( new_dist - cur_dist ) != 0 && ( new_dist - org_dist ) == 0 )
-        DIAGNOSTICS( "_rast_E_RP1_RP2_SAME_POS_ON_PROJ", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_RP1_RP2_SAME_POS_ON_PROJ );
 #endif
 
       exc->func_move( exc,
@@ -6833,7 +6821,7 @@
 
     if ( BOUNDS( point, exc->zp0.n_points ) )
     {
-      DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+      DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
       if ( exc->pedantic_hinting )
         exc->error = FT_THROW( Invalid_Reference );
@@ -7062,7 +7050,7 @@
 
       if ( BOUNDS( end_point, exc->pts.n_points ) )
       {
-        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
         end_point = exc->pts.n_points - 1;
       }
@@ -7274,7 +7262,7 @@
       }
       else
       {
-        DIAGNOSTICS( "_rast_E_POINT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_POINT_OUT_OF_RANGE );
 
         if ( exc->pedantic_hinting )
           exc->error = FT_THROW( Invalid_Reference );
@@ -7321,7 +7309,7 @@
 
       if ( BOUNDSL( A, exc->cvtSize ) )
       {
-        DIAGNOSTICS( "_rast_E_CVT_OUT_OF_RANGE", exc );
+        DIAGNOSTICS( FT_RASTER_ERROR_CVT_OUT_OF_RANGE );
         if ( exc->pedantic_hinting )
         {
           exc->error = FT_THROW( Invalid_Reference );

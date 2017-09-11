@@ -836,6 +836,82 @@ FT_BEGIN_HEADER
 
   } FT_CharMapRec;
 
+#ifdef FT_DIAGNOSTICS
+  typedef enum
+  {
+    FT_RASTER_ERROR_3_USED_FOR_PERIOD,
+    FT_RASTER_ERROR_BITS_10_AND_13_SET,
+    FT_RASTER_ERROR_BITS_8_AND_11_SET,
+    FT_RASTER_ERROR_BITS_9_AND_12_SET,
+    FT_RASTER_ERROR_CONTOUR_OUT_OF_RANGE,
+    FT_RASTER_ERROR_CVT_OUT_OF_RANGE,
+    FT_RASTER_ERROR_DIVIDE_BY_ZERO,
+    FT_RASTER_ERROR_EIF_WITHOUT_IF,
+    FT_RASTER_ERROR_ELSE_WITHOUT_EIF,
+    FT_RASTER_ERROR_ELSE_WITHOUT_IF,
+    FT_RASTER_ERROR_ENDF_BEYOND_64K_OF_FDEF,
+    FT_RASTER_ERROR_ENDF_BEYOND_64K_OF_IDEF,
+    FT_RASTER_ERROR_ENDF_EXECUTED,
+    FT_RASTER_ERROR_EXCEEDS_INSTR_DEFS_IN_MAXP,
+    FT_RASTER_ERROR_FDEF_FOUND_IN_FDEF,
+    FT_RASTER_ERROR_FDEF_FOUND_IN_IDEF,
+    FT_RASTER_ERROR_FDEF_OUT_OF_RANGE,
+    FT_RASTER_ERROR_FDEF_SPACE_NOT_DEFINED,
+    FT_RASTER_ERROR_FDEF_WITHOUT_ENDF,
+    FT_RASTER_ERROR_FUCOORDINATE_OUT_OF_RANGE,
+    FT_RASTER_ERROR_FUNCTION_NOT_DEFINED,
+    FT_RASTER_ERROR_IDEF_FOUND_IN_FDEF,
+    FT_RASTER_ERROR_IDEF_FOUND_IN_IDEF,
+    FT_RASTER_ERROR_IDEF_WITHOUT_ENDF,
+    FT_RASTER_ERROR_IF_WITHOUT_EIF,
+    FT_RASTER_ERROR_INST_OPCODE_TO_LARGE,
+    FT_RASTER_ERROR_INSTR_DEFD_BY_FS,
+    FT_RASTER_ERROR_INVALID_FLAG,
+    FT_RASTER_ERROR_INVALID_INSTRUCTION,
+    FT_RASTER_ERROR_INVALID_MAXZONES_IN_MAXP,
+    FT_RASTER_ERROR_INVALID_STACK_ACCESS,
+    FT_RASTER_ERROR_INVALID_ZONE,
+    FT_RASTER_ERROR_INVALID_ZONE_IN_IUP,
+    FT_RASTER_ERROR_INVALID_ZONE_NO_TWI,
+    FT_RASTER_ERROR_JMP_BEFORE_BEGINNING,
+    FT_RASTER_ERROR_JMP_BEYOND_2MORE_THAN_END,
+    FT_RASTER_ERROR_MATH_OVERFLOW,
+    FT_RASTER_ERROR_NOT_CALLED_FROM_PREPROGRAM,
+    FT_RASTER_ERROR_OVERFLOW_INST_PTR,
+    FT_RASTER_ERROR_POINT_OUT_OF_RANGE,
+    FT_RASTER_ERROR_PREPROGAM_ZONE_NOT_TWI,
+    FT_RASTER_ERROR_REFPOINT_USED_BUT_NOT_SET,
+    FT_RASTER_ERROR_RESERVED_BIT_SET,
+    FT_RASTER_ERROR_RP1_RP2_SAME_POS_ON_PROJ,
+    FT_RASTER_ERROR_SELECTOR_INVALID,
+    FT_RASTER_ERROR_STACK_OVERFLOW,
+    FT_RASTER_ERROR_STACK_UNDERFLOW,
+    FT_RASTER_ERROR_STORAGE_OUT_OF_RANGE,
+    FT_RASTER_ERROR_STORE_INDEX_NOT_WRITTEN_TO,
+    FT_RASTER_ERROR_TWILIGHT_ZONE_PT_NOT_SET,
+    FT_RASTER_ERROR_VALUE_INVALID_0_OR_1,
+    FT_RASTER_ERROR_VALUE_INVALID_0_OR_2,
+    FT_RASTER_ERROR_VALUE_OUT_OF_RANGE,
+    FT_RASTER_ERROR_VALUE_TO_LARGE_FOR_INT16,
+    FT_RASTER_ERROR_VALUE_TO_LARGE_FOR_INT8,
+    FT_RASTER_ERROR_VALUE_TO_SMALL,
+    FT_RASTER_ERROR_VECTOR_XY_INVALID,
+    FT_RASTER_ERROR_VECTOR_XY_ZERO,
+    FT_RASTER_ERROR_ZONE_NOT_0_NOR_1,
+    FT_RASTER_WARNING_APPLE_ONLY_INSTR,
+    FT_RASTER_WARNING_CALL_ZERO_LEN_FUNC,
+    FT_RASTER_WARNING_CALL_ZERO_LEN_UD_INSTR,
+    FT_RASTER_WARNING_DEBUG_FOUND,
+    FT_RASTER_WARNING_DELTAC_IN_GLYPH_PGM,
+    FT_RASTER_WARNING_HI_PT_LESS_THAN_LOW_PT,
+    FT_RASTER_WARNING_JMP_OFFSET_ZERO,
+    FT_RASTER_WARNING_LOOP_NOT_1_AT_END_OF_PGM,
+    FT_RASTER_WARNING_LOOPCALL_COUNT_LESS_THAN_ONE,
+    FT_RASTER_WARNING_MPS_ALWAYS_12_ON_WINDOWS,
+    FT_RASTER_WARNING_PF_VECTORS_AT_OR_NEAR_PERP,
+    FT_RASTER_WARNING_PT_NOT_TOUCHED,
+    FT_RASTER_INFO_POSTSCRIPT_OUTLINES
+  } FT_DiagnosticsMsgId;
 
   /*************************************************************************/
   /*                                                                       */
@@ -846,14 +922,15 @@ FT_BEGIN_HEADER
   /*    A callback that provides details about problems detected           */
   /*    while interpreting hinting instructions.                           */
   /*                                                                       */
-  typedef int   (*FT_DiagnosticsFunc)( const char*        message,
-                                       const char* const  opcode,
-                                       int                range_base,
-                                       int                is_composite,
-                                       int                IP,
-                                       int                callTop,
-                                       int                opc,
-                                       int                start );
+  typedef int   (*FT_DiagnosticsFunc)( FT_DiagnosticsMsgId  msgId,
+                                       const char* const    opcode,
+                                       int                  range_base,
+                                       int                  is_composite,
+                                       int                  IP,
+                                       int                  callTop,
+                                       int                  opc,
+                                       int                  start );
+#endif /* #ifdef FT_DIAGNOSTICS */
 
 
   /*************************************************************************/
@@ -4289,6 +4366,7 @@ FT_BEGIN_HEADER
                                 FT_Bool  value );
 
 
+#ifdef FT_DIAGNOSTICS
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
@@ -4324,6 +4402,7 @@ FT_BEGIN_HEADER
   /*                                                                       */
   FT_EXPORT( void )
   FT_Diagnostics_Unset( FT_Face face );
+#endif /* #ifdef FT_DIAGNOSTICS */
 
   /* */
 
