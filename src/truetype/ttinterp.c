@@ -4010,7 +4010,9 @@
       return;
     }
 
-    if ( args[0] > 0 )
+    if ( args[0] < 1 )
+      DIAGNOSTICS( FT_RASTER_WARNING_LOOPCALL_COUNT_LESS_THAN_ONE );
+    else
     {
       pCrec = exc->callStack + exc->callTop;
 
