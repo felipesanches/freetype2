@@ -3162,10 +3162,16 @@
   Ins_ROUND( TT_ExecContext  exc,
              FT_Long*        args )
   {
+#ifdef FT_DIAGNOSTICS
+    if ((exc->opcode & 3) == 3){
+      DIAGNOSTICS( FT_RASTER_ERROR_INVALID_COMPENSATION_FLAG );
+    }
+#endif
+
     args[0] = exc->func_round(
                 exc,
                 args[0],
-                exc->tt_metrics.compensations[exc->opcode - 0x68] );
+                exc->tt_metrics.compensations[exc->opcode & 3] );
   }
 
 
@@ -3179,10 +3185,16 @@
   Ins_NROUND( TT_ExecContext  exc,
               FT_Long*        args )
   {
+#ifdef FT_DIAGNOSTICS
+    if ((exc->opcode & 3) == 3){
+      DIAGNOSTICS( FT_RASTER_ERROR_INVALID_COMPENSATION_FLAG );
+    }
+#endif
+
     args[0] = Round_None(
                 exc,
                 args[0],
-                exc->tt_metrics.compensations[exc->opcode - 0x6C] );
+                exc->tt_metrics.compensations[exc->opcode & 3] );
   }
 
 
@@ -6148,6 +6160,12 @@
 
     /* round flag */
 
+#ifdef FT_DIAGNOSTICS
+    if ((exc->opcode & 3) == 3){
+      DIAGNOSTICS( FT_RASTER_ERROR_INVALID_COMPENSATION_FLAG );
+    }
+#endif
+
     if ( ( exc->opcode & 4 ) != 0 )
     {
 #ifdef TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY
@@ -6313,6 +6331,12 @@
         cvt_dist += 32;
     }
 #endif /* TT_SUPPORT_SUBPIXEL_HINTING_INFINALITY */
+
+#ifdef FT_DIAGNOSTICS
+    if ((exc->opcode & 3) == 3){
+      DIAGNOSTICS( FT_RASTER_ERROR_INVALID_COMPENSATION_FLAG );
+    }
+#endif
 
     /* control value cut-in and round */
 
