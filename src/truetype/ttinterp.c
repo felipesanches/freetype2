@@ -7320,6 +7320,11 @@
     FT_ULong  A, C, P;
     FT_Long   B;
 
+#ifdef FT_DIAGNOSTICS
+    if (exc->curRange == tt_coderange_glyph){
+      DIAGNOSTICS( FT_RASTER_WARNING_DELTAC_IN_GLYPH_PGM );
+    }
+#endif
 
     P    = (FT_ULong)exc->func_cur_ppem( exc );
     nump = (FT_ULong)args[0];
