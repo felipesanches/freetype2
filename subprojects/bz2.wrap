@@ -1,0 +1,4 @@
+[wrap-git]
+directory=bz2
+url=https://github.com/centricular/bzip2
+revision=head
